@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html style="overflow: hidden;">
+
+<head>
+  <title>ローマ字可視化ね</title>
+  <meta charset="utf-8">
+  <meta name="description" content="ローマ字でかなを入力するための道筋を可視化します。">
+  <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+  <script type="text/javascript" src="DAG.js"></script>
+  <style type="text/css">
+    #mynetwork {
+      width: 100%;
+      height: 100vh;
+      background-color: #303030;
+    }
+
+    .separator {
+      border-left: 1px solid #ccc;
+      height: 30px;
+      margin-right: 10px;
+    }
+
+    .margin-right {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="other" style="display: flex; align-items: center; justify-content: center; margin: 0.5vh;">
+    <b class="margin-right" title="入力されたかなをローマ字で入力するための道筋を表示します">ローマ字可視化</b>
+    <input type="text" id="kana" name="kana" value="でっっかい" class="margin-right" onkeypress="if(event.key === 'Enter') document.getElementById('enter').click();">
+    <button id="enter" class="margin-right">Enter</button>
+    <button id="reset" class="margin-right" title="位置を中央に戻します">Reset</button>
+
+    <div class="separator"></div>
+    <span title="ローマ字を辺に添わせることができます">
+      <b>辺に追従</b>
+      <input type="checkbox" id="top" name="top" value="top" class="margin-right">
+    </span>
+
+    <div class="separator"></div>
+    <button id="save" class="margin-right" title="下のキャンバスを右クリックして保存することもできます">Save</button>
+  </div>
+  <div id="mynetwork"></div>
+  <img id="canvasImg" alt="Right click to save me!">
+
+  <script type="text/javascript">
+    let network = null;
+
+    function initializeNetwork() {
+      const kanaInput = document.getElementById('kana').value;
+      const DAG = getDAG(kanaInput);
+
+      const nodes = new vis.DataSet(
+        DAG.map((_, index) => ({
+          id: index,
+          label: index === 0 ? '@' : kanaInput.substr(0, index),
+        }))
+      );
+
+      // Aは隣接リストによって表された有向グラフ、重み付き
+      const edges = new vis.DataSet(
+        DAG.flatMap((nodes, index) =>
+          nodes.map((node, i) => ({
+            from: index,
+            to: node[0],
+            label: node[1],
+            arrows: 'to',
+            length: 100 + 100 * i,
+          }))
+        )
+      );
+
+      const data = { nodes: nodes, edges: edges };
+      const options = {
+        physics: {
+          enabled: true,
+          solver: 'repulsion',
+          repulsion: {
+            centralGravity: 0.2,
+            springLength: 100,
+            springConstant: 0.08,
+            nodeDistance: 150,
+            damping: 0.06,
+          },
+          maxVelocity: 50,
+          minVelocity: 0.1,
+          stabilization: {
+            enabled: true,
+            iterations: 1000,
+            updateInterval: 15,
+          },
+        },
+        layout: {
+          improvedLayout: true,
+        },
+        nodes: {
+          shape: 'box',
+          font: {
+            size: 25,
+            color: '#8DC63F',
+          },
+          borderWidth: 0,
+          color: {
+            background: '#303030',
+            highlight: {
+              background: '#222222',
+            },
+          },
+        },
+        edges: {
+          font: {
+            size: 18,
+            color: '#AAA',
+            strokeWidth: 0,
+          },
+          color: {
+            color: '#868686',
+            highlight: '#999'
+          },
+        },
+      };
+      if (network !== null) {
+        network.destroy();
+      }
+      var bool_top = document.getElementById('top').checked;
+      if (bool_top) {
+        options.edges.font.align = 'top';
+      }
+      const container = document.getElementById('mynetwork');
+      network = new vis.Network(container, data, options);
+    }
+
+    document.onload = initializeNetwork();
+
+    document.getElementById('enter').addEventListener('click', initializeNetwork);
+    document.getElementById('top').addEventListener('change', initializeNetwork);
+    document.getElementById('reset').addEventListener('click', () => {
+      network.fit();
+    });
+
+    network.on("afterDrawing", function (ctx) {
+      var dataURL = ctx.canvas.toDataURL();
+      document.getElementById('canvasImg').src = dataURL;
+    });
+
+    document.getElementById('save').addEventListener('click', () => {
+      var canvas = document.getElementById('mynetwork').getElementsByTagName('canvas')[0];
+      var dataURL = canvas.toDataURL();
+      var newWindow = window.open();
+      newWindow.document.write('<img src="' + dataURL + '" alt="Graph Image">');
+    });
+  </script>
+</body>
+
+</html>

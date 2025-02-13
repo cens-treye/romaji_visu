@@ -1,0 +1,278 @@
+// かな文字のうち、n→ん、っか→kka 等一部を除いた対応表
+const kanaDict = {
+  てゅ: ["t'yu", "thu"],
+  でゅ: ["d'yu", "dhu"],
+  ふゅ: ["hwyu", "fyu"],
+  っ: ["xtsu", "ltsu", "xtu", "ltu"],
+  ゔゃ: ["vya"],
+  ゔぃ: ["vyi", "vi"],
+  ゔゅ: ["vyu"],
+  ゔぇ: ["vye", "ve"],
+  ゔょ: ["vyo"],
+  きゃ: ["kya"],
+  きぃ: ["kyi"],
+  きゅ: ["kyu"],
+  きぇ: ["kye"],
+  きょ: ["kyo"],
+  ぎゃ: ["gya"],
+  ぎぃ: ["gyi"],
+  ぎゅ: ["gyu"],
+  ぎぇ: ["gye"],
+  ぎょ: ["gyo"],
+  しゃ: ["sya", "sha"],
+  しぃ: ["syi"],
+  しゅ: ["syu", "shu"],
+  しぇ: ["sye", "she"],
+  しょ: ["syo", "sho"],
+  し: ["shi", "si", "ci"],
+  じゃ: ["zya", "jya", "ja"],
+  じぃ: ["zyi", "jyi"],
+  じゅ: ["zyu", "jyu", "ju"],
+  じぇ: ["zye", "jye", "je"],
+  じょ: ["zyo", "jyo", "jo"],
+  ちゃ: ["tya", "cha", "cya"],
+  ちぃ: ["tyi", "cyi"],
+  ちゅ: ["tyu", "chu", "cyu"],
+  ちぇ: ["tye", "che", "cye"],
+  ちょ: ["tyo", "cho", "cyo"],
+  ち: ["chi", "ti"],
+  ぢゃ: ["dya"],
+  ぢぃ: ["dyi"],
+  ぢゅ: ["dyu"],
+  ぢぇ: ["dye"],
+  ぢょ: ["dyo"],
+  つぁ: ["tsa"],
+  つぃ: ["tsi"],
+  つぇ: ["tse"],
+  つぉ: ["tso"],
+  てゃ: ["tha"],
+  てぃ: ["thi", "t'i"],
+  てぇ: ["the"],
+  てょ: ["tho"],
+  でゃ: ["dha"],
+  でぃ: ["dhi", "d'i"],
+  でぇ: ["dhe"],
+  でょ: ["dho"],
+  とぁ: ["twa"],
+  とぃ: ["twi"],
+  とぅ: ["twu", "t'u"],
+  とぇ: ["twe"],
+  とぉ: ["two"],
+  どぁ: ["dwa"],
+  どぃ: ["dwi"],
+  どぅ: ["dwu", "d'u"],
+  どぇ: ["dwe"],
+  どぉ: ["dwo"],
+  にゃ: ["nya"],
+  にぃ: ["nyi"],
+  にゅ: ["nyu"],
+  にぇ: ["nye"],
+  にょ: ["nyo"],
+  ひゃ: ["hya"],
+  ひぃ: ["hyi"],
+  ひゅ: ["hyu"],
+  ひぇ: ["hye"],
+  ひょ: ["hyo"],
+  びゃ: ["bya"],
+  びぃ: ["byi"],
+  びゅ: ["byu"],
+  びぇ: ["bye"],
+  びょ: ["byo"],
+  ぴゃ: ["pya"],
+  ぴぃ: ["pyi"],
+  ぴゅ: ["pyu"],
+  ぴぇ: ["pye"],
+  ぴょ: ["pyo"],
+  ふゃ: ["fya"],
+  ふょ: ["fyo"],
+  ふぁ: ["hwa", "fa"],
+  ふぃ: ["hwi", "fi"],
+  ふぇ: ["hwe", "fe"],
+  ふぉ: ["hwo", "fo"],
+  みゃ: ["mya"],
+  みぃ: ["myi"],
+  みゅ: ["myu"],
+  みぇ: ["mye"],
+  みょ: ["myo"],
+  りゃ: ["rya"],
+  りぃ: ["ryi"],
+  りゅ: ["ryu"],
+  りぇ: ["rye"],
+  りょ: ["ryo"],
+  ぃ: ["lyi", "xyi", "xi", "li"],
+  ぇ: ["lye", "xye", "xe", "le"],
+  ヵ: ["xka", "lka"],
+  ヶ: ["xke", "lke"],
+  くぁ: ["kwa", "qa"],
+  くぃ: ["kwi", "qi"],
+  くぅ: ["kwu"],
+  くぇ: ["kwe", "qe"],
+  くぉ: ["kwo", "qo"],
+  ぐぁ: ["gwa"],
+  ぐぃ: ["gwi"],
+  ぐぅ: ["gwu"],
+  ぐぇ: ["gwe"],
+  ぐぉ: ["gwo"],
+  すぁ: ["swa"],
+  すぃ: ["swi"],
+  すぅ: ["swu"],
+  すぇ: ["swe"],
+  すぉ: ["swo"],
+  ずぁ: ["zwa"],
+  ずぃ: ["zwi"],
+  ずぅ: ["zwu"],
+  ずぇ: ["zwe"],
+  ずぉ: ["zwo"],
+  つ: ["tsu", "tu"],
+  ゃ: ["xya", "lya"],
+  ゐ: ["wyi"],
+  ゅ: ["xyu", "lyu"],
+  ゑ: ["wye"],
+  ょ: ["xyo", "lyo"],
+  ゎ: ["xwa", "lwa"],
+  うぁ: ["wha"],
+  うぃ: ["whi", "wi"],
+  う: ["whu", "wu", "u"],
+  うぇ: ["whe", "we"],
+  うぉ: ["who"],
+  "・": ["z/", "/"],
+  "…": ["z."],
+  "‥": ["z,"],
+  "←": ["zh"],
+  "↓": ["zj"],
+  "↑": ["zk"],
+  "→": ["zl"],
+  "〜": ["z-", "~"],
+  "『": ["z["],
+  "』": ["z]"],
+  ゔぁ: ["va"],
+  ゔ: ["vu"],
+  ゔぉ: ["vo"],
+  ふ: ["fu", "hu", "fu"],
+  ん: ["n'", "nn", "xn"],
+  ぁ: ["xa", "la"],
+  ぅ: ["xu", "lu"],
+  ぉ: ["xo", "lo"],
+  いぇ: ["ye"],
+  か: ["ka", "ca"],
+  き: ["ki"],
+  く: ["ku", "cu", "qu"],
+  け: ["ke"],
+  こ: ["ko", "co"],
+  が: ["ga"],
+  ぎ: ["gi"],
+  ぐ: ["gu"],
+  げ: ["ge"],
+  ご: ["go"],
+  さ: ["sa"],
+  す: ["su"],
+  せ: ["se", "ce"],
+  そ: ["so"],
+  ざ: ["za"],
+  じ: ["zi", "ji"],
+  ず: ["zu"],
+  ぜ: ["ze"],
+  ぞ: ["zo"],
+  た: ["ta"],
+  て: ["te"],
+  と: ["to"],
+  だ: ["da"],
+  ぢ: ["di"],
+  づ: ["du"],
+  で: ["de"],
+  ど: ["do"],
+  な: ["na"],
+  に: ["ni"],
+  ぬ: ["nu"],
+  ね: ["ne"],
+  の: ["no"],
+  は: ["ha"],
+  ひ: ["hi"],
+  へ: ["he"],
+  ほ: ["ho"],
+  ば: ["ba"],
+  び: ["bi"],
+  ぶ: ["bu"],
+  べ: ["be"],
+  ぼ: ["bo"],
+  ぱ: ["pa"],
+  ぴ: ["pi"],
+  ぷ: ["pu"],
+  ぺ: ["pe"],
+  ぽ: ["po"],
+  ま: ["ma"],
+  み: ["mi"],
+  む: ["mu"],
+  め: ["me"],
+  も: ["mo"],
+  や: ["ya"],
+  ゆ: ["yu"],
+  よ: ["yo"],
+  ら: ["ra"],
+  り: ["ri"],
+  る: ["ru"],
+  れ: ["re"],
+  ろ: ["ro"],
+  わ: ["wa"],
+  を: ["wo"],
+  ー: ["-"],
+  "。": ["."],
+  "、": [","],
+  "「": ["["],
+  "」": ["]"],
+  あ: ["a"],
+  い: ["i"],
+  え: ["e"],
+  お: ["o"],
+};
+
+function katakanaToHiragana(text) {
+  return text.replace(/[ァ-ヶ]/g, (match) => String.fromCharCode(match.charCodeAt(0) - 0x60));
+}
+
+const xtuSet = new Set("qvlxkgszjtdhfbpmyrwc");
+
+function getDAG(target) {
+  target = katakanaToHiragana(target);
+  const length = target.length;
+  const DAG = Array.from({ length: length + 1 }, () => []);
+
+  for (let i = 0; i < length; i++) {
+    for (const kana in kanaDict) {
+      if (target.startsWith(kana, i)) {
+        for (const romaji of kanaDict[kana]) {
+          DAG[i].push([i + kana.length, romaji]);
+        }
+      }
+    }
+  }
+
+  // っ の処理
+  for (let i = length - 1; i >= 0; i--) {
+    if (target[i] === "っ" && i < length - 1) {
+      for (const [j, romaji] of DAG[i + 1]) {
+        if (xtuSet.has(romaji[0])) {
+          DAG[i].push([j, romaji[0] + romaji]);
+        }
+      }
+    }
+  }
+
+  // ん の処理
+  for (let i = 0; i < length; i++) {
+    if (target[i] === "ん") {
+      if (i === length - 1 || !"あいうえおなにぬねのゃぃゅぇょ".includes(target[i + 1])) {
+        DAG[i].push([i + 1, "n"]);
+      }
+    }
+  }
+
+  // 未登録の文字をそのまま返す
+  for (let i = 0; i < length; i++) {
+    if (DAG[i].length === 0) {
+      DAG[i].push([i + 1, target[i]]);
+    }
+  }
+
+  return DAG;
+}

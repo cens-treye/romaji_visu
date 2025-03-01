@@ -410,3 +410,5 @@ function predictRomaji(target, romaji) {
     delRomaji: delRomaji.join(""),
   };
 }
+
+export { predictRomaji };

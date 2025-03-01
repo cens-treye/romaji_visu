@@ -1,9 +1,22 @@
-// かな文字のうち、n→ん、っか→kka 等一部を除いた対応表
+/*
+漢字変換のための関数を提供する(基本的に Google 日本語入力のローマ字テーブルをもとに作成している)
+
+- getDAG(target: string): Array<Array<[number, string]>>
+  - 文字列の各文字に対して、その文字から始まるローマ字のリストと次の文字のインデックスを持つDAGを返す
+  - DAG[i] = [[j, romaji], ...] は、i文字目時点でromajiを入力すると、j文字目に移動することを意味する
+  - 未登録の文字はそのまま返す
+- predictRomaji(kana: string, romaji: string): [string, string]
+  - 文字列とローマ字を入れると、先頭からDAGをたどって正しいローマ字の切り出しと以降入力すべきローマ字を返す
+  - ex. "ろーまじ", "roms" -> ["rom", "aji"]
+*/
+
+// かな文字のうち、n→ん、っか→kka 等一部を除いた対応表(Google 日本語入力のローマ字テーブルをもとに作成)
+// 各かなについて優先度の高い順にローマ字を並べる
 const kanaDict = {
-  てゅ: ["t'yu", "thu"],
-  でゅ: ["d'yu", "dhu"],
-  ふゅ: ["hwyu", "fyu"],
-  っ: ["xtsu", "ltsu", "xtu", "ltu"],
+  てゅ: ["thu", "t'yu"],
+  でゅ: ["dhu", "d'yu"],
+  ふゅ: ["fyu", "hwyu"],
+  っ: ["xtu", "ltu", "xtsu", "ltsu"],
   ゔゃ: ["vya"],
   ゔぃ: ["vyi", "vi"],
   ゔゅ: ["vyu"],
@@ -85,10 +98,10 @@ const kanaDict = {
   ぴょ: ["pyo"],
   ふゃ: ["fya"],
   ふょ: ["fyo"],
-  ふぁ: ["hwa", "fa"],
-  ふぃ: ["hwi", "fi"],
-  ふぇ: ["hwe", "fe"],
-  ふぉ: ["hwo", "fo"],
+  ふぁ: ["fa", "hwa"],
+  ふぃ: ["fi", "hwi"],
+  ふぇ: ["fe", "hwe"],
+  ふぉ: ["fo", "hwo"],
   みゃ: ["mya"],
   みぃ: ["myi"],
   みゅ: ["myu"],
@@ -99,15 +112,15 @@ const kanaDict = {
   りゅ: ["ryu"],
   りぇ: ["rye"],
   りょ: ["ryo"],
-  ぃ: ["lyi", "xyi", "xi", "li"],
-  ぇ: ["lye", "xye", "xe", "le"],
+  ぃ: ["xi", "li", "lyi", "xyi"],
+  ぇ: ["xe", "le", "lye", "xye"],
   ヵ: ["xka", "lka"],
   ヶ: ["xke", "lke"],
-  くぁ: ["kwa", "qa"],
-  くぃ: ["kwi", "qi"],
+  くぁ: ["qa", "kwa"],
+  くぃ: ["qi", "kwi"],
   くぅ: ["kwu"],
-  くぇ: ["kwe", "qe"],
-  くぉ: ["kwo", "qo"],
+  くぇ: ["qe", "kwe"],
+  くぉ: ["qo", "kwo"],
   ぐぁ: ["gwa"],
   ぐぃ: ["gwi"],
   ぐぅ: ["gwu"],
@@ -123,7 +136,7 @@ const kanaDict = {
   ずぅ: ["zwu"],
   ずぇ: ["zwe"],
   ずぉ: ["zwo"],
-  つ: ["tsu", "tu"],
+  つ: ["ts", "tsu"],
   ゃ: ["xya", "lya"],
   ゐ: ["wyi"],
   ゅ: ["xyu", "lyu"],
@@ -131,9 +144,9 @@ const kanaDict = {
   ょ: ["xyo", "lyo"],
   ゎ: ["xwa", "lwa"],
   うぁ: ["wha"],
-  うぃ: ["whi", "wi"],
-  う: ["whu", "wu", "u"],
-  うぇ: ["whe", "we"],
+  うぃ: ["wi", "whi"],
+  う: ["u", "wu", "whu"],
+  うぇ: ["we", "whe"],
   うぉ: ["who"],
   "・": ["z/", "/"],
   "…": ["z."],
@@ -142,14 +155,14 @@ const kanaDict = {
   "↓": ["zj"],
   "↑": ["zk"],
   "→": ["zl"],
-  "〜": ["z-", "~"],
+  "〜": ["~", "z-"],
   "『": ["z["],
   "』": ["z]"],
   ゔぁ: ["va"],
   ゔ: ["vu"],
   ゔぉ: ["vo"],
-  ふ: ["fu", "hu", "fu"],
-  ん: ["n'", "nn", "xn"],
+  ふ: ["hu", "fu"],
+  ん: ["nn", "xn", "n'"],
   ぁ: ["xa", "la"],
   ぅ: ["xu", "lu"],
   ぉ: ["xo", "lo"],
@@ -226,14 +239,22 @@ const kanaDict = {
   お: ["o"],
 };
 
+// 文字列に含まれるカタカナをひらがなに変換
 function katakanaToHiragana(text) {
   return text.replace(/[ァ-ヶ]/g, (match) => String.fromCharCode(match.charCodeAt(0) - 0x60));
 }
 
+// 文字列に含まれる全角数字、アルファベット、記号を半角に変換
+function normalizeText(text) {
+  return text.replace(/[０-９Ａ-Ｚａ-ｚ]/g, (match) => String.fromCharCode(match.charCodeAt(0) - 0xfee0));
+}
+
+// 繰り返すと「っ」になる文字の集合
 const xtuSet = new Set("qvlxkgszjtdhfbpmyrwc");
 
+// 文字列の各文字に対して、その文字から始まるローマ字のリストと次の文字のインデックスを持つDAGを返す
+// DAG[i] = [[j, romaji], ...] は、i文字目時点でromajiを入力すると、j文字目に移動することを意味する
 function getDAG(target) {
-  target = katakanaToHiragana(target);
   const length = target.length;
   const DAG = Array.from({ length: length + 1 }, () => []);
 
@@ -246,6 +267,10 @@ function getDAG(target) {
       }
     }
   }
+
+  target = katakanaToHiragana(target);
+  target = normalizeText(target);
+  target = target.toLowerCase();
 
   // っ の処理
   for (let i = length - 1; i >= 0; i--) {
@@ -275,4 +300,90 @@ function getDAG(target) {
   }
 
   return DAG;
+}
+
+// 2つの文字列の先頭から一致する長さを返す
+function matchLength(str1, str2) {
+  let i = 0;
+  while (i < str1.length && i < str2.length && str1[i] === str2[i]) {
+    i++;
+  }
+  return i;
+}
+
+// 文字列（かな）とローマ字を入れると、先頭からDAGをたどって、入力済みのかなと入力済みのローマ字、残りのローマ字、削除されたローマ字を返す
+function predictRomaji(target, romaji) {
+  romaji = romaji.toLowerCase();
+  var DAG = getDAG(target);
+  const length = DAG.length;
+  // 最小の入力で次の文字に進めるようにする(まず、idx が大きい順、次にローマ字の長さが短い順にソート)
+  for (let i = 0; i < length; i++) {
+    DAG[i].sort((a, b) => b[0] - a[0] || a[1].length - b[1].length);
+  }
+
+  let tarIdx = 0;
+  let romIdx = 0;
+  let remRomaji = [];
+  let delRomaji = [];
+  let path = [];
+  let hitKana = "";
+  let hitRomaji = "";
+
+  while (tarIdx < DAG.length - 1 && romIdx < romaji.length) {
+    let found = false;
+    for (const [nextIdx, nextRomaji] of DAG[tarIdx]) {
+      // かなのうち入力しきったものがあれば採用
+      if (romIdx + nextRomaji.length <= romaji.length && romaji.slice(romIdx, romIdx + nextRomaji.length) === nextRomaji) {
+        path.push(nextRomaji);
+        tarIdx = nextIdx;
+        romIdx += nextRomaji.length;
+        found = true;
+        break;
+      }
+    }
+    if (!found) break;
+  }
+
+  hitKana = target.slice(0, tarIdx);
+
+  // 途中まで入力された場合、最大一致するかなのうち先にあるものを採用
+  if (tarIdx < DAG.length - 1) {
+    let maxMatch = 0;
+    let maxIdx = -1;
+    for (var i = 0; i < DAG[tarIdx].length; i++) {
+      const [nextIdx, nextRomaji] = DAG[tarIdx][i];
+      const matchLen = matchLength(nextRomaji, romaji.slice(romIdx));
+      if (matchLen > maxMatch) {
+        maxMatch = matchLen;
+        maxIdx = i;
+      }
+    }
+    if (maxIdx !== -1) {
+      const [nextIdx, nextRomaji] = DAG[tarIdx][maxIdx];
+      path.push(nextRomaji.slice(0, maxMatch));
+      remRomaji.push(nextRomaji.slice(maxMatch));
+      romIdx += maxMatch;
+      tarIdx = nextIdx;
+    }
+  }
+  hitRomaji = path.join("");
+
+  // 未入力のローマ字を追加
+  while (tarIdx < DAG.length - 1) {
+    if (DAG[tarIdx].length === 0) break;
+    const [nextIdx, nextRomaji] = DAG[tarIdx][0];
+    tarIdx = nextIdx;
+    path.push(nextRomaji);
+    remRomaji.push(nextRomaji);
+  }
+
+  // 不必要なローマ字を削除
+  delRomaji.push(romaji.slice(romIdx));
+
+  return {
+    hitKana,
+    hitRomaji,
+    remRomaji: remRomaji.join(""),
+    delRomaji: delRomaji.join(""),
+  };
 }

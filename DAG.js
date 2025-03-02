@@ -5,9 +5,9 @@
   - 文字列の各文字に対して、その文字から始まるローマ字のリストと次の文字のインデックスを持つDAGを返す
   - DAG[i] = [[j, romaji], ...] は、i文字目時点でromajiを入力すると、j文字目に移動することを意味する
   - 未登録の文字はそのまま返す
-- predictRomaji(kana: string, romaji: string): [string, string]
-  - 文字列とローマ字を入れると、先頭からDAGをたどって正しいローマ字の切り出しと以降入力すべきローマ字を返す
-  - ex. "ろーまじ", "roms" -> ["rom", "aji"]
+- predictRomaji(kana: string, romaji: string): { hitKana: string, hitRomaji: string, remRomaji: string, delRomaji: string }
+  - 文字列（かな）とローマ字を入れると、先頭からDAGをたどって、入力済みのかなと入力済みのローマ字、残りのローマ字、削除するローマ字を返す
+  - ex. predictRomaji("かな", "kani") => {"か", "kan", "a", "i"}
 */
 
 // かな文字のうち、n→ん、っか→kka 等一部を除いた対応表(Google 日本語入力のローマ字テーブルをもとに作成)
